@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from backend.database import get_db
-from backend.models import User
-from backend.schemas import UserLogin
-from backend.utils import verify_password  # hash kontrol fonksiyonun burada varsayılıyor
+from app.database import get_db
+from app.models.user import User
+from app.schemas.user import UserLogin
+from app.services.auth import verify_password
 
 
 router = APIRouter()
