@@ -1,14 +1,27 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+import os
 
-DATABASE_URL = "mysql+pymysql://root:1212003dogac35@localhost/lokmaci_db"
+from pathlib import Path
 
+env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
+
+# Environment variable'dan DB bağlantısını al
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# SQLAlchemy engine oluştur
 engine = create_engine(DATABASE_URL)
+
+# Session oluşturucu
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# Base sınıfı
 Base = declarative_base()
 
+# Dependency olarak kullanılabilecek session getter
 def get_db():
     db = SessionLocal()
     try:
