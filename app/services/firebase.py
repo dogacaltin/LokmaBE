@@ -17,7 +17,7 @@ if env_path.exists():
 
 # Ortam değişkeninden Firebase kimlik bilgisi dosyasının yolunu al
 # Render'da bu bir "Secret File" olarak ayarlanmalıdır.
-FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH")
+FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH", "firebase_admin_sdk.json") 
 
 if FIREBASE_CREDENTIALS_PATH is None:
     raise ValueError("FIREBASE_CREDENTIALS_PATH ortam değişkeni ayarlanmamış!")
