@@ -1,3 +1,6 @@
-from .expense import router as expense_router
-from .order import router as order_router
-from .user import router as user_router
+# Bu dosya, "app.routers" paketinden nelerin import edilebileceğini tanımlar.
+# main.py'ın tüm router'ları bulabilmesi için hepsini burada listelemeliyiz.
+
+from . import auth
+from . import order
+from . import expense
