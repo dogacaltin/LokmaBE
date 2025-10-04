@@ -4,3 +4,4 @@
 from . import user
 from . import order
 from . import expense
+from . import auth_router
