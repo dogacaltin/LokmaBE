@@ -6,3 +6,4 @@ python-jose
 passlib[bcrypt]
 pymysql
 python-dotenv
+firebase-admin

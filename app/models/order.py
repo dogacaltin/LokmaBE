@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, Float
-from app.database import Base
+from backend.app.services.database import Base
 from datetime import datetime
 
 class Order(Base):

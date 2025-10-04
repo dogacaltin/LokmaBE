@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Local imports
 from app import models, schemas
-from app.database import get_db
+from backend.app.services.database import get_db
 from app.services.auth import verify_password
 from app.models.user import User
 from app.schemas.user import UserLogin
