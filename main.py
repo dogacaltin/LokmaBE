@@ -1,39 +1,32 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Local imports
-from app import models, schemas
-from backend.app.services.database import get_db
-from app.services.auth import verify_password
-from app.models.user import User
-from app.schemas.user import UserLogin
-
-# Router imports
-from routers import auth_router
-from app.routers import expense
-from app.routers import order_router  # Bunu da ekliyoruz
+# Router'larımızı import ediyoruz
+from app.routers import auth, order, expense 
 
 app = FastAPI()
 
-# CORS ayarları – frontend bağlantısı için gerekli
+# CORS ayarları (Frontend'den gelen isteklere izin vermek için)
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:8080",
+    # Frontend'inizin deploy edildiği adresleri buraya ekleyebilirsiniz
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Production'da "*" yerine frontend URL'i yazman önerilir
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Router'ları dahil et
-app.include_router(auth_router.router, prefix="/auth")
+# Router'ları uygulamaya dahil ediyoruz
+app.include_router(auth.router)
+app.include_router(order.router)
 app.include_router(expense.router)
-app.include_router(order_router)  # Order router'ını da ekledik
 
-# Giriş endpoint'i (opsiyonel olarak auth_router içine de alabilirsin)
-@app.post("/login")
-def login(request: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == request.email).first()
-    if not user or not verify_password(request.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    return {"message": "Login successful"}
+@app.get("/")
+def read_root():
+    return {"message": "API is working correctly"}
