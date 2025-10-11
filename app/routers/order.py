@@ -3,8 +3,7 @@ from app.schemas.order import OrderCreate, OrderUpdate, OrderOut
 from app.services.firebase import db
 from typing import List
 from datetime import datetime
-
-# Timestamp import'u TAMAMEN KALDIRILDI. Artık ona ihtiyacımız yok.
+from uuid import uuid4
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
@@ -16,7 +15,6 @@ def safe_doc_to_dict(doc):
     data = doc.to_dict()
     
     # Tarih alanlarını kontrol et ve datetime ise ISO formatına çevir
-    # Timestamp kontrolü kaldırıldı çünkü firebase-admin kütüphanesi bunu zaten datetime'a çeviriyor.
     for field in ["yapilacak_tarih", "verildigi_tarih"]:
         if field in data and data[field] and isinstance(data[field], datetime):
             data[field] = data[field].isoformat()
@@ -30,8 +28,7 @@ def get_orders():
         orders_stream = db.collection("orders").stream()
         return [safe_doc_to_dict(doc) for doc in orders_stream if doc.exists]
     except Exception as e:
-        print(f"HATA: Siparişler alınırken sorun oluştu - {e}")
-   
+        raise HTTPException(status_code=500, detail=f"Could not fetch orders: {e}")
 
 @router.get("/columns")
 def get_order_columns():
@@ -44,21 +41,17 @@ def get_order_columns():
     except Exception as e:
         raise HTTPException(status_code=500, detail="Could not fetch columns")
 
-@router.get("/{order_id}", response_model=OrderOut)
-def get_order(order_id: str):
-    doc_ref = db.collection("orders").document(order_id)
-    order = safe_doc_to_dict(doc_ref.get())
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
-    return order
-
 @router.post("/", response_model=OrderOut)
 def create_order(order: OrderCreate):
     try:
-        order_dict = order.model_dump()
-        doc_ref = db.collection("orders").document()
-        doc_ref.set(order_dict)
-        return {**order_dict, "id": doc_ref.id}
+        order_id = str(uuid4())
+        ref = db.collection("orders").document(order_id)
+        # verildigi_tarih alanını sunucu tarafında ekleyelim
+        order_data = order.model_dump()
+        order_data["verildigi_tarih"] = datetime.utcnow()
+        ref.set(order_data)
+        new_doc = ref.get()
+        return safe_doc_to_dict(new_doc)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not create order: {e}")
 
