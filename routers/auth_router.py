@@ -39,9 +39,8 @@ def login(user_login: UserLogin):
 
     try:
         response = requests.post(url, json=payload)
-        response.raise_for_status()  # HTTP 4xx veya 5xx hatalarında exception fırlatır
+        response.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        # Firebase'den gelen hata mesajını yakala ve frontend'e gönder
         error_json = err.response.json().get("error", {})
         error_message = error_json.get("message", "Invalid email or password")
         raise HTTPException(status_code=401, detail=error_message)
@@ -54,20 +53,25 @@ def login(user_login: UserLogin):
     if not id_token:
         raise HTTPException(status_code=500, detail="Firebase'den token alınamadı.")
 
-    # Token'ı doğrula ve kullanıcı bilgilerini al (opsiyonel ama iyi bir pratik)
     try:
         decoded_token = auth.verify_id_token(id_token)
         uid = decoded_token['uid']
         user_record = auth.get_user(uid)
         
-        # --- EN ÖNEMLİ BÖLÜM ---
-        # Frontend'e token'ı ve diğer kullanıcı bilgilerini döndür
-        return {
+        # Frontend'e göndereceğimiz cevabı hazırla
+        response_data = {
             "message": f"Hoşgeldin {user_record.email}",
             "token": id_token,
             "uid": uid,
             "email": user_record.email,
         }
+
+        # --- HATA AYIKLAMA İÇİN EKLENEN BÖLÜM ---
+        # Bu satır, Render loglarına tam olarak ne gönderildiğini yazdıracak.
+        print("DEBUG: Login response data:", response_data)
+        # --- HATA AYIKLAMA BÖLÜMÜ SONU ---
+        
+        return response_data
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Token doğrulanamadı: {str(e)}")
 
