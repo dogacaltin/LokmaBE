@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException
-from uuid import uuid4
 from app.schemas.order import OrderCreate, OrderUpdate, OrderOut
 from app.services.firebase import db
 from typing import List
 from datetime import datetime
-# Firebase'in özel Timestamp türünü tanımak için bu import gerekli (DÜZELTİLDİ)
-from google.cloud.firestore_v1 import Timestamp
+
+# Timestamp import'u TAMAMEN KALDIRILDI. Artık ona ihtiyacımız yok.
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
@@ -16,10 +15,10 @@ def safe_doc_to_dict(doc):
     
     data = doc.to_dict()
     
-    # Tarih alanlarını kontrol et ve Timestamp ise ISO formatına çevir
+    # Tarih alanlarını kontrol et ve datetime ise ISO formatına çevir
+    # Timestamp kontrolü kaldırıldı çünkü firebase-admin kütüphanesi bunu zaten datetime'a çeviriyor.
     for field in ["yapilacak_tarih", "verildigi_tarih"]:
-        if field in data and data[field] and isinstance(data[field], (datetime, Timestamp)):
-            # Tarihi UTC'den alıp standart ISO 8601 formatına çeviriyoruz.
+        if field in data and data[field] and isinstance(data[field], datetime):
             data[field] = data[field].isoformat()
 
     data["id"] = doc.id
@@ -31,8 +30,8 @@ def get_orders():
         orders_stream = db.collection("orders").stream()
         return [safe_doc_to_dict(doc) for doc in orders_stream if doc.exists]
     except Exception as e:
-        print(f"Error fetching orders: {e}")
-        raise HTTPException(status_code=500, detail="Could not fetch orders")
+        print(f"HATA: Siparişler alınırken sorun oluştu - {e}")
+   
 
 @router.get("/columns")
 def get_order_columns():
