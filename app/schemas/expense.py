@@ -1,23 +1,35 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
-# Giderlerin temel şeması
+# API'ye YENİ gider gönderilirken kullanılan yapı
 class ExpenseBase(BaseModel):
     tutar: float
     aciklama: str
-    tarih: datetime  # ISO 8601 formatı: "2025-08-20T14:00"
+    tarih: datetime
 
-# Yeni gider oluşturma için (POST)
 class ExpenseCreate(ExpenseBase):
     pass
 
-# Gider güncelleme için (PUT)
-class ExpenseUpdate(ExpenseBase):
-    pass
+# API'ye GÜNCELLEME isteği gönderilirken kullanılan yapı
+class ExpenseUpdate(BaseModel):
+    tutar: Optional[float] = None
+    aciklama: Optional[str] = None
+    tarih: Optional[datetime] = None
 
-# Gider görüntüleme (GET) için
-class ExpenseOut(ExpenseBase):
-    id: int
+# API'den DÖNEN cevabın yapısını tanımlar
+class ExpenseOut(BaseModel):
+    # Düzeltme 1: ID her zaman metindir (string).
+    id: str
+    
+    # Düzeltme 2: Router, tarihi metne çevirdiği için,
+    # bu şema da tarihi metin olarak beklemelidir.
+    tarih: Optional[str] = None
+
+    # Diğer alanlar
+    tutar: Optional[float] = None
+    aciklama: Optional[str] = None
 
     class Config:
-        from_attributes = True  # Pydantic v2 (önceki adı: orm_mode = True)
+        from_attributes = True
+
