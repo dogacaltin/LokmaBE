@@ -3,37 +3,34 @@ from uuid import uuid4
 from app.schemas.order import OrderCreate, OrderUpdate, OrderOut
 from app.services.firebase import db
 from typing import List
+from datetime import datetime
+# Firebase'in özel Timestamp türünü tanımak için bu import gerekli
+from google.cloud.firestore_v1.types import Timestamp
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
 def safe_doc_to_dict(doc):
-    """Firestore belgesini güvenli bir şekilde sözlüğe dönüştürür."""
+    """Firestore belgesini güvenli bir şekilde sözlüğe dönüştürür ve tarihleri formatlar."""
     if not doc.exists:
         return None
     
-    # Beklenen tüm alanları varsayılan değerlerle tanımla
-    order_data = {
-        "id": doc.id,
-        "siparis": doc.get("siparis"),
-        "yapilacak_tarih": doc.get("yapilacak_tarih"),
-        "verildigi_tarih": doc.get("verildigi_tarih"),
-        "musteri_isim": doc.get("musteri_isim"),
-        "musteri_telefon": doc.get("musteri_telefon"),
-        "ekip": doc.get("ekip"),
-        "adres": doc.get("adres"),
-        "fiyat": doc.get("fiyat"),
-        "notlar": doc.get("notlar")
-    }
-    return order_data
+    data = doc.to_dict()
+    
+    # Tarih alanlarını kontrol et ve Timestamp ise ISO formatına çevir
+    for field in ["yapilacak_tarih", "verildigi_tarih"]:
+        if field in data and isinstance(data[field], (datetime, Timestamp)):
+            # Tarihi UTC'den alıp standart ISO 8601 formatına çeviriyoruz.
+            data[field] = data[field].isoformat()
+
+    data["id"] = doc.id
+    return data
 
 @router.get("/", response_model=List[OrderOut])
 def get_orders():
     try:
         orders_stream = db.collection("orders").stream()
-        # Her belgeyi güvenli bir şekilde dönüştür
         return [safe_doc_to_dict(doc) for doc in orders_stream if doc.exists]
     except Exception as e:
-        # Loglama için hata mesajını yazdırabilirsin
         print(f"Error fetching orders: {e}")
         raise HTTPException(status_code=500, detail="Could not fetch orders")
 
@@ -44,7 +41,7 @@ def get_order_columns():
         for doc in sample_docs:
             if doc.exists:
                 return {"columns": list(doc.to_dict().keys())}
-        return {"columns": []} # Koleksiyon boşsa
+        return {"columns": []}
     except Exception as e:
         raise HTTPException(status_code=500, detail="Could not fetch columns")
 
@@ -60,7 +57,6 @@ def get_order(order_id: str):
 def create_order(order: OrderCreate):
     try:
         order_dict = order.model_dump()
-        # Firestore'a eklemeden önce ID'yi kaldır
         doc_ref = db.collection("orders").document()
         doc_ref.set(order_dict)
         return {**order_dict, "id": doc_ref.id}
@@ -91,3 +87,4 @@ def delete_order(order_id: str):
         return {"message": "Order deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not delete order: {e}")
+
