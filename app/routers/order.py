@@ -4,8 +4,8 @@ from app.schemas.order import OrderCreate, OrderUpdate, OrderOut
 from app.services.firebase import db
 from typing import List
 from datetime import datetime
-# Firebase'in özel Timestamp türünü tanımak için bu import gerekli
-from google.cloud.firestore_v1.types import Timestamp
+# Firebase'in özel Timestamp türünü tanımak için bu import gerekli (DÜZELTİLDİ)
+from google.cloud.firestore_v1 import Timestamp
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
@@ -18,7 +18,7 @@ def safe_doc_to_dict(doc):
     
     # Tarih alanlarını kontrol et ve Timestamp ise ISO formatına çevir
     for field in ["yapilacak_tarih", "verildigi_tarih"]:
-        if field in data and isinstance(data[field], (datetime, Timestamp)):
+        if field in data and data[field] and isinstance(data[field], (datetime, Timestamp)):
             # Tarihi UTC'den alıp standart ISO 8601 formatına çeviriyoruz.
             data[field] = data[field].isoformat()
 
