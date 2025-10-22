@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends # Depends eklendi
 from app.schemas.order import OrderCreate, OrderUpdate, OrderOut
 from app.services.firebase import db, get_current_user # get_current_user eklendi
-from typing import List, Dict, Any # Dict ve Any eklendi
+# --- YENİ: typing modülünden gerekli importlar ---
+from typing import List, Dict, Any, Optional
+# --- Import Sonu ---
 from datetime import datetime
 from uuid import uuid4
 
@@ -15,7 +17,7 @@ def safe_doc_to_dict(doc) -> Optional[Dict[str, Any]]:
     """Firestore belgesini güvenli bir şekilde sözlüğe dönüştürür ve tarihleri formatlar."""
     if not doc.exists:
         return None
-    
+
     data = doc.to_dict()
     if not data: # Belge var ama içi boşsa
         return {"id": doc.id} # Sadece ID'yi döndür veya boş bir dict döndür
