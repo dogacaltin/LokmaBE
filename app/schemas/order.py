@@ -1,10 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
 
-# API'ye YENİ sipariş gönderilirken kullanılan yapı
-# Frontend'den gelen tarih metinleri (örn: "2025-10-11T14:30:00")
-# Pydantic tarafından otomatik olarak datetime nesnesine çevrilir.
+# API'ye YENİ sipariş gönderilirken kullanılan temel yapı
+# Not: Frontend şu an yeni siparişte 'ekstra_telefon' göndermiyor,
+# ama gelecekte eklenebilir diye buraya da ekliyoruz.
 class OrderBase(BaseModel):
     siparis: str
     yapilacak_tarih: datetime
@@ -14,12 +14,13 @@ class OrderBase(BaseModel):
     adres: str
     fiyat: float
     notlar: Optional[str] = None
+    ekstra_telefon: Optional[str] = None # YENİ ALAN EKLENDİ
 
 class OrderCreate(OrderBase):
     pass
 
 # API'ye GÜNCELLEME isteği gönderilirken kullanılan yapı
-# Tüm alanlar opsiyoneldir, böylece sadece istenen alanlar güncellenebilir.
+# Frontend sadece 'notlar' veya 'ekstra_telefon' gönderdiğinde de çalışır.
 class OrderUpdate(BaseModel):
     siparis: Optional[str] = None
     yapilacak_tarih: Optional[datetime] = None
@@ -29,19 +30,13 @@ class OrderUpdate(BaseModel):
     adres: Optional[str] = None
     fiyat: Optional[float] = None
     notlar: Optional[str] = None
+    ekstra_telefon: Optional[str] = None # YENİ ALAN EKLENDİ
 
 # API'den DÖNEN cevabın yapısını tanımlar
-# Bu, router'daki safe_doc_to_dict fonksiyonunun çıktısıyla eşleşmelidir.
 class OrderOut(BaseModel):
-    # Düzeltme 1: ID her zaman metindir (string).
-    id: str
-    
-    # Düzeltme 2: Router, tarihleri metne çevirdiği için,
-    # bu şema da tarihleri metin olarak beklemelidir.
-    yapilacak_tarih: Optional[str] = None
-    verildigi_tarih: Optional[str] = None
-
-    # Diğer alanlar opsiyonel olarak tanımlanarak esneklik sağlanır.
+    id: str # ID her zaman string
+    yapilacak_tarih: Optional[str] = None # Tarihler string olarak döner
+    verildigi_tarih: Optional[str] = None # Tarihler string olarak döner
     siparis: Optional[str] = None
     musteri_isim: Optional[str] = None
     musteri_telefon: Optional[str] = None
@@ -49,7 +44,8 @@ class OrderOut(BaseModel):
     adres: Optional[str] = None
     fiyat: Optional[float] = None
     notlar: Optional[str] = None
+    ekstra_telefon: Optional[str] = None # YENİ ALAN EKLENDİ
 
     class Config:
-        from_attributes = True
+        from_attributes = True # Pydantic v2 için 'orm_mode' yerine kullanılır
 
